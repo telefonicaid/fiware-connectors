@@ -1,7 +1,7 @@
 Description
 ==================
 
-Set of Python scripts for integrating visualization tools with NSGO Context Brokers such as Orion.
+Set of Python scripts for integrating visualization tools with NSGI Context Brokers such as Orion.
 
 You can get Orion at: https://github.com/telefonicaid/fiware-orion
 
