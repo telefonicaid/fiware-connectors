@@ -26,26 +26,15 @@ import datetime
 import time
 
 
-API_KEY = ''
-
-
-def get_property(property_name):
-
-    try:
-        file = open("orion2cartodb.yaml")
-        file_content = yaml.load(file)
-        # print (property_name)
-        property_number = file_content[property_name]
-        #print (property_number)
-        return property_number
-    except:
-        print("Property can not be read: " + property_name)
-        return 1
+file = open("orion2cartodb.yaml")
+properties = yaml.load(file)
 
 
 class DefaultHandler(webapp2.RequestHandler):
 
     def send2CartoDB(self, url, attribute_name):
+        #Adjusting to CartoDB Throtling
+        time.sleep(2)
         req = urllib2.Request(url)
         f = urllib2.urlopen(req)
         response = f.read()
@@ -59,27 +48,29 @@ class DefaultHandler(webapp2.RequestHandler):
         print(log)
         return updatedRows
 
-    def get_apikey(self):
-        try:
-            file = open("orion2cartodb.yaml")
-            file_content = yaml.load(file)
-            API_KEY = file_content["cartodb_apikey"]
-            return API_KEY
-        except:
-            print("Api Key can not be read")
-            return 1
+    def composeURL(self,tablename, attribute_name, entity_id, value, action):
 
+        if action== "update":
 
-    def get_base_endpoint(self):
-        try:
-            file = open("orion2cartodb.yaml")
-            file_content = yaml.load(file)
-            base_endpoint = file_content["cartodb_base_endpoint"]
-            return base_endpoint
-        except:
-            print("CartoDB Port can not be read")
-            return 1
+            if attribute_name == "position":
+                latitude, longitude = value.split(',')
+                attributes_and_values = "latitude="+latitude+"longitude=" + longitude
+            else:
+                attributes_and_values = attribute_name + "=" + value
 
+            url = properties["cartodb_base_endpoint"] + "/api/v2/sql?q=UPDATE%20" + tablename + "%20SET%20"+ attributes_and_values +"%20WHERE%20name='" + entity_id + "'&api_key=" + properties["cartodb_apikey"]
+            return url
+
+        if action=="create":
+
+            if attribute_name == "position":
+                latitude, longitude = value.split(',')
+                attributes_and_values = "latitude,longitude)%20VALUES%20('" + entity_id + "','" + latitude + "','" + longitude
+            else:
+                attributes_and_values = attribute_name + ")%20VALUES%20('" + entity_id + "','" + value
+
+            url = properties["cartodb_base_endpoint"] + "/api/v2/sql?q=INSERT%20INTO%20" + tablename + "%20(name,"+attributes_and_values+"')&api_key=" + properties["cartodb_apikey"]
+            return url
 
     def post(self):
         # get url path
@@ -108,58 +99,25 @@ class DefaultHandler(webapp2.RequestHandler):
                     for received_attribute in received_entity['contextElement']['attributes']:
                         if received_attribute['name'] == attribute_name:
                             value = received_attribute['value']
+                            print (value)
 
-            if attribute_name == "position":
+            #Composing Update URL
+            url = self.composeURL(tablename, attribute_name, entity_id, value,"update")
+            #Try to update the asset information at cartodb table
+            updatedRows = self.send2CartoDB(url, attribute_name)
 
-                updatedRows = -1
+            #if update rows is != 0 means that the asset is not created yet so It creates a new asset
+            if updatedRows == 0:
+                #Composing Creation URL
+                url = self.composeURL(tablename, attribute_name, entity_id, value,"create")
+                self.send2CartoDB(url, attribute_name)
 
-                # Split value location into latitude, longitude
-                value = value.split(',')
-                latitude, longitude = value
-
-
-                # call cartodb
-                #try to update the asset information at cartodb table
-
-                url = self.get_base_endpoint() + "/api/v2/sql?q=UPDATE%20" + tablename + "%20SET%20latitude=" + latitude + ",longitude=" + longitude + "%20WHERE%20name='" + entity_id + "'&api_key=" + self.get_apikey()
-                updatedRows = self.send2CartoDB(url, attribute_name)
-                
-
-
-                #if update rows is != 0 means that the asset is not created yet so It creates a new asset
-
-                if updatedRows == 0:
-                    opener = urllib2.build_opener
-                    url = self.get_base_endpoint() + "/api/v2/sql?q=INSERT%20INTO%20" + tablename + "%20(name,latitude,longitude)%20VALUES%20('" + entity_id + "','" + latitude + "','" + longitude + "')&api_key=" + self.get_apikey()
-                    self.send2CartoDB(url, attribute_name)
-
-
-                  
-            if attribute_name != "position":
-                
-                #Adjusting to CartoDB Throtling
-                time.sleep(1)
-                updatedRows = -1
-                url = self.get_base_endpoint() + "/api/v2/sql?q=UPDATE%20" + tablename + "%20SET%20" + attribute_name + "=" + value + "%20WHERE%20name='" + entity_id + "'&api_key=" + self.get_apikey()
-                print (url)
-                updatedRows = self.send2CartoDB(url, attribute_name)
-
-                # if update rows is != 0 means that the asset is not created yet so It creates a new asset
-
-                if updatedRows == 0:
-                    opener = urllib2.build_opener
-                    url = self.get_base_endpoint() + "/api/v2/sql?q=INSERT%20INTO%20" + tablename + "%20(name," + attribute_name + ")%20VALUES%20('" + entity_id + "','" + value + "')&api_key=" + self.get_apikey()
-                    self.send2CartoDB(url, attribute_name)
-
-
-
-application = webapp2.WSGIApplication([
+def main():
+    application = webapp2.WSGIApplication([
                                           (r'/.*', DefaultHandler)
                                       ], debug=True)
 
-
-def main():
-    httpserver.serve(application, host=get_property("orion2cartodb_host"), port=get_property("orion2cartodb_port"))
+    httpserver.serve(application, host=properties["orion2cartodb_host"], port=properties["orion2cartodb_port"])
 
 
 if __name__ == '__main__':
