@@ -44,8 +44,10 @@ class MiError(Exception):
         elif self.valor==106:
             return "POST: Error " + str(self.valor)+" Invalid Api Key"
         elif self.valor==107:
-            return "POST: Error " + str(self.valor)+" Data could not be sent"
+            return "POST: Error " + str(self.valor)+" Properties file could not be load"
         elif self.valor==108:
+            return "POST: Error " + str(self.valor)+" Data could not be sent"
+        elif self.valor==109:
             return "CONFIGURATION: Error " + str(self.valor)+" Invalid HOST"
 
 
@@ -56,29 +58,54 @@ def print_log(message,lvl):
     log=str("time="+str(d.isoformat("T"))+"|lvl="+lvl+"|corr="+str(ref)+"|trans="+str(ref)+"|ob=ES|comp=ORION_TO_DUCKSBOARD|op="+message)
     print(log)
 
-class DefaultHandler(webapp2.RequestHandler):
-
-    #get API_KEY in MD5 format
-    def get_api_key(self):
+class Properties():
+    file_content=[]
+    def Load(self):
         try:
             api_key=0
             file=open("orion2ducksboard.yaml")
 
             #check ir file exists
             if file.closed:
-                print_log("GET_API_KEY: File does not exist","WARNING")
+                print_log("LOAD: File does not exist","WARNING")
                 return 1
 
             #Load content file
-            file_content=yaml.load(file)
+            self.file_content=yaml.load(file)
+        except:
+            return 1
 
+        #return Api_key
+        return 0
+
+    #get API_KEY in MD5 format
+    def get_api_key(self):
+        api_key=""
+        try:
             #Geet Api Key
-            api_key=base64.encodestring('%s:%s' % (file_content["orion2ducksboard_apikey"], "unused"))[:-1]
+            api_key=base64.encodestring('%s:%s' % (self.file_content["orion2ducksboard_apikey"], "unused"))[:-1]
         except:
             return 1,api_key
 
         #return Api_key
         return 0,api_key
+
+    #Get ip and port from configuration file
+    def get_Ip_Port(self):
+        ip=""
+        port=""
+        try:
+            ip=self.file_content["orion2ducksboard_host"]
+            port=self.file_content["orion2ducksboard_port"]
+        except:
+            return 1,ip,port
+
+        #return IP and PORT
+        return 0,ip,port
+
+class DefaultHandler(webapp2.RequestHandler):
+    #Load properties
+    prop=Properties()
 
     #Parse input data
     def parse(self, path):
@@ -297,9 +324,21 @@ class DefaultHandler(webapp2.RequestHandler):
             req = urllib2.Request(url, data_post, headers)
             f = urllib2.urlopen(req)
             response = f.read()
+            resp=json.loads(str(response))
+            for att in resp:
+                if att=="response":
+                    if resp["response"]=="ok":
+                        message="SENT TO DUCKSBOARD: "+"WidgetID:"+str(wideget_id)+" Data:"+str(ducksboard_data)
+                        print_log(message,"DEBUG")
+                    else:
+                        message="SEND TO DUCKSBOARD: Bad Request from ducksboard ->"+str(resp["error"])
+                        print_log(message,"WARNING")
+                        return 1
+                else:
+                    message="SEND TO DUCKSBOARD: Bad Request from ducksboard ->"+str(resp["error"])
+                    print_log(message,"WARNING")
+                    return 1
             f.close()
-            message="SENT TO DUCKSBOARD: "+"WidgetID:"+str(wideget_id)+" Data:"+str(ducksboard_data)
-            print_log(message,"DEBUG")
         except:
             return 1
         return 0
@@ -408,7 +447,7 @@ class DefaultHandler(webapp2.RequestHandler):
         else:
             try:
                 #get API_KEY
-                status_error, api_key = self.get_api_key()
+                status_error, api_key = self.prop.get_api_key()
 
                 if status_error == 1:
                     self.response.status_int = 403
@@ -426,7 +465,7 @@ class DefaultHandler(webapp2.RequestHandler):
                     if status_error == 1:
                         self.response.status_int = 403
                         self.response.write("Data could not be sent")
-                        raise MiError(107)
+                        raise MiError(108)
 
                 except MiError, e:
                     print_log(str(e),"ERROR")
@@ -441,30 +480,25 @@ class DefaultHandler(webapp2.RequestHandler):
                         print_log("POST: Error","ERROR")
 
 
-#Get ip and port from configuration file
-def get_Ip_Port():
-    try:
-        file=open("orion2ducksboard.yaml")
-        if file.closed:
-            print_log("GET_IP_PORT: File orion2ducksboard.yaml does not exists","WARNING")
-            return 1
-        file_content=yaml.load(file)
-        ip=file_content["orion2ducksboard_host"]
-        port=file_content["orion2ducksboard_port"]
-    except:
-        return 1
-
-    #return IP and PORT
-    return 0,ip,port
-
 #main
 def main():
-    application = webapp2.WSGIApplication([(r'/.*', DefaultHandler)], debug=True)
-    status_error,IP,PORT=get_Ip_Port()
+    #Load Properties
+    prop=Properties()
+    status_error=prop.Load()
     if status_error==0:
-        httpserver.serve(application, host=IP, port=PORT)
+        DefaultHandler.prop=prop
+
+        application = webapp2.WSGIApplication([(r'/.*', DefaultHandler)], debug=True)
+
+        #Get IP and Port
+        status_error,IP,PORT=prop.get_Ip_Port()
+        if status_error==0:
+            httpserver.serve(application, host=IP, port=PORT)
+        else:
+            raise MiError(109)
+            print_log(str(e),"ERROR")
     else:
-        raise MiError(108)
+        raise MiError(107)
         print_log(str(e),"ERROR")
 
 if __name__ == '__main__':
