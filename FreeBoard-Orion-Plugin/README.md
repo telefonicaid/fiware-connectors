@@ -64,4 +64,4 @@ You will have to indicate the next information:
 * **Advanced**: (only advanced users) You can tick it if you know how is the NGSI JSON document and you want to access to extra information.
 * **Refresh every**: It's the polling time.
 
-![General ](https://pdihub.hi.inet/iot/iot-partnerintegration/raw/freeboard-orion-plugin/Freeboard%20Plugins/CB/img/Orion_DataSource.png "CounterBroker_DataSource settings example")
+![General ](https://raw.githubusercontent.com/telefonicaid/fiware-dataviz/freeboard-orion-plugin/FreeBoard-Orion-Plugin/img/Orion_DataSource.png "Orion_DataSource settings example")
