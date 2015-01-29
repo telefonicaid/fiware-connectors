@@ -22,7 +22,7 @@ Get Freeboard code at:
 
 https://github.com/Freeboard/freeboard
 
-Deploy it on your server or host it directly on your computer
+Deploy it on your server or host it directly on your computer.
 
 
 ### Install the plugin
@@ -64,4 +64,4 @@ You will have to indicate the next information:
 * **Advanced**: (only advanced users) You can tick it if you know how is the NGSI JSON document and you want to access to extra information.
 * **Refresh every**: It's the polling time.
 
-![General ](https://raw.githubusercontent.com/telefonicaid/fiware-dataviz/freeboard-orion-plugin/FreeBoard-Orion-Plugin/img/Orion_DataSource.png "Orion_DataSource settings example")
+![General ](https://raw.githubusercontent.com/telefonicaid/fiware-dataviz/develop/FreeBoard-Orion-Plugin/img/Orion_DataSource.png "Orion_DataSource settings example")
