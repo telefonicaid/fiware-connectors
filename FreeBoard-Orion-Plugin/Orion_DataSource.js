@@ -71,7 +71,16 @@
 								mydata["longitude"]=pos_split[1];
 							}
 							else{
-								mydata[attributes[i]["name"]]=attributes[i]["value"];
+								
+								// If attribute is not a number append it
+								if(isNaN(attributes[i]["value"])){
+									mydata[attributes[i]["name"]]=attributes[i]["value"];
+								}
+								
+								//If attribute is a number round and append it
+								else{
+									mydata[attributes[i]["name"]]=((parseFloat(attributes[i]["value"])).toFixed(1)).toString();
+								}
 							}
 						}
 					}
