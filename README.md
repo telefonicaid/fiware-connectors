@@ -11,6 +11,7 @@ On this repository you can find the following scripts:
 
 * **[orion2cartodb](/orion2cartodb)**: parse Orion Context Broker subscription notifications and feed a CartoDb Map.  Use this if you have many entities with a location that you want to show on a map.
 * **[orion2ducksboard](/orion2ducksboard)**: parse Orion Context Broker subscription notifications and feed a Ducksboard dashboard. Use this if you have a limited set of entities and want to show widgets with their historic evolution.
+* **[Orion_DataSource](/FreeBoard-Orion-Plugin)**:feed a Freeboard dashboard with NSGI Context Brokers such as Orion.
 
 Please, take into account that you will be required to host these scripts into a server reacheable by the Orion Context Broker your are using.
 
