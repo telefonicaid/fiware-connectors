@@ -1,4 +1,4 @@
-orion2cartodb_host: 10.0.4.161
-orion2cartodb_port: 8078
+orion2cartodb_host: XX.XX.XX.XX
+orion2cartodb_port: YYYY
 cartodb_base_endpoint: http://iotsupport.cartodb.com
-cartodb_apikey: 6e87270accdefa4e1126d00cbbd6caa4132c3619
+cartodb_apikey: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
