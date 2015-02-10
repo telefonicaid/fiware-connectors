@@ -72,9 +72,23 @@
 							}
 							else{
 								
-								// If attribute is not a number append it
+								// If attribute is not a number
 								if(isNaN(attributes[i]["value"])){
-									mydata[attributes[i]["name"]]=attributes[i]["value"];
+									
+									// If attribute is a boolean and false append 0
+									if(attributes[i]["value"]=="false"){
+										mydata[attributes[i]["name"]]=0;
+									}
+									
+									// If attribute is a boolean and true append 1
+									else if(attributes[i]["value"]=="true"){
+										mydata[attributes[i]["name"]]=1;
+									}
+									
+									// If attribute is not a boolean or a position or a number append it
+									else{
+										mydata[attributes[i]["name"]]=attributes[i]["value"];
+									}
 								}
 								
 								//If attribute is a number round and append it
