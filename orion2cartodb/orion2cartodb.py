@@ -21,7 +21,8 @@ import yaml
 from paste import httpserver
 import uuid
 import datetime
-import time
+import unicodedata
+import string
 
 
 #print Logs
@@ -31,6 +32,25 @@ def print_log(message,lvl):
     log=str("time="+str(d.isoformat("T"))+"|lvl="+lvl+"|corr="+str(ref)+"|trans="+str(ref)+"|ob=ES|comp=ORION_TO_CARTODB|op="+message)
     print(log)
 
+#Normalize strings
+def string_normalizer(message):
+
+    # Convert to unicode format
+    message = message.decode()
+
+    # Lower-case
+    message=message.lower()
+
+    # Replace some characters
+    message=message.replace('.','_')
+    message=message.replace(' ','_')
+
+    # Get NFKD unicode format
+    message=unicodedata.normalize('NFKD', message)
+
+    # Delete not ascii_letters
+    message=''.join(x for x in message if x in string.ascii_letters or x=="_" or x.isdigit())
+    return message
 
 # Load properties
 print_log("Loading properties from orion2cartodb.yaml","INFO")
@@ -259,13 +279,13 @@ class DefaultHandler(webapp2.RequestHandler):
         data = json.loads(self.request.body)
 
         #Get Fiware-Service header = Table name
-        tablename=str(self.request.headers.get('Fiware-Service')).lower()
+        tablename=string_normalizer(str(self.request.headers.get('Fiware-Service')))
 
         #Loop for entities
         for entity_id in data["contextResponses"]:
 
             # Get entity name (replace '.' and ' ' and lower-case)
-            entity_name=(((str(entity_id["contextElement"]["id"])).replace('.','_')).replace(' ', '_')).lower()
+            entity_name=string_normalizer(entity_id["contextElement"]["id"])
 
             # Loop for attributes and their types to append them into a dictionary
             attributes={}       #Initialization
@@ -274,7 +294,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
                 # Append
                 attributes[str(attritube_id["name"])]=str(attritube_id["value"])
-                types[str(attritube_id["name"])]=str(attritube_id["type"])
+                types[str(attritube_id["name"])]=string_normalizer(str(attritube_id["type"]))
 
             # Try to update the attributes
             error,total_rows=self.Update(tablename,entity_name,attributes)
