@@ -59,7 +59,7 @@ https://github.com/telefonicaid/fiware-figway/tree/master/python/ContextBroker
 Anyway, you can create it on your own as follows:
 
 ```
-   POST [http://int.dca.tid.es/NGSI10/subscribeContext][]
+   POST [[HOST]/v1/subscribeContext][]
    Accept: application/json
    Fiware-Service: **your_service**
    Content-Type: application/json
@@ -109,7 +109,7 @@ https://github.com/telefonicaid/fiware-figway/tree/master/python/ContextBroker
 Anyway, you can update it on your own as follows:
 
 ```
-   POST [http://int.dca.tid.es/NGSI10/updateContext][]
+   POST [[HOST]/v1/updateContext][]
    Accept: application/json
    Fiware-Service: **your_service**
    Content-Type: application/json
