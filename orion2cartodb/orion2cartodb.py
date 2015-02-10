@@ -279,7 +279,7 @@ class DefaultHandler(webapp2.RequestHandler):
         data = json.loads(self.request.body)
 
         #Get Fiware-Service header = Table name
-        tablename=str(self.request.headers.get('Fiware-Service'))
+        tablename=string_normalizer(str(self.request.headers.get('Fiware-Service')))
 
         #Loop for entities
         for entity_id in data["contextResponses"]:
