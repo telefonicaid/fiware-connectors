@@ -318,7 +318,6 @@ class DefaultHandler(webapp2.RequestHandler):
         print_log("SENDING TO DUCKSBOARD: "+"WidgetID:"+str(wideget_id)+" Data:"+str(ducksboard_data),"DEBUG")
 
         try:
-            opener = urllib2.build_opener
             data_post = json.dumps(ducksboard_data)
             url = 'https://push.ducksboard.com/v/' + wideget_id
             req = urllib2.Request(url, data_post, headers)
