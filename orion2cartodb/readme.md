@@ -13,7 +13,7 @@ You can create an account at: http://cartodb.com/
 Deployment, configuration and running
 -----
 
-orion2ducksboard must be deployed on a server reacheable by the Context Broker.
+orion2ducksboard must be deployed on a server reachable by the Context Broker.
 
 orion2ducksboard is based on webapp2, please see https://webapp-improved.appspot.com for full details, so you will need to install the following dependences on your server:
 
@@ -25,8 +25,8 @@ orion2ducksboard is based on webapp2, please see https://webapp-improved.appspot
 
 Once webapp2 is installed, you must edit the orion2ducksboard configuration file (orion2ducksboard.yaml): 
 
--   orion2cartodb_host: your server IP address interface attached IP reacheable by the Context Broker.
--   orion2cartodb_port: your server port. Please remember that must be reacheable from Context Broker.
+-   orion2cartodb_host: your server IP address interface attached IP reachable by the Context Broker.
+-   orion2cartodb_port: your server port. Please remember that must be reachable from Context Broker.
 -   orion2cartodb_apikey: your private CartoDB API key.
 
 Finally orion2ducksboard is ready to be started:
@@ -39,66 +39,51 @@ Finally orion2ducksboard is ready to be started:
 Usage
 -----
 
-### Create a table in CartoDB
-
-Access to CartoDB and create a new table 
-
-```
-   https://iotsupport.cartodb.com/login
-```
-
-Add colums to the new table with *the same name* of the entity attributes that you would like to shown on the map.
-
 
 ### Create a subscription in ContextBroker
 
-Please, consider using FIGWAY script UpdateEntityAttribute.py.py to update it, you find it at:
+Please, consider using FIGWAY script UpdateEntityAttribute.py to update it, you find it at:
 
 https://github.com/telefonicaid/fiware-figway/tree/master/python/ContextBroker
 
 Anyway, you can create it on your own as follows:
 
-```
-   POST [[HOST]/v1/subscribeContext][]
-   Accept: application/json
-   Fiware-Service: **your_service**
-   Content-Type: application/json
- 
-   {
-   entities": [
+
+       POST [[HOST]/v1/subscribeContext][]
+       Accept: application/json
+       Fiware-Service: **your_service**
+       Content-Type: application/json
+     
        {
-           "type": "device", 
-           "isPattern": "false", 
-           "id": "**your_entity**"
-       }
-   ],
-   "attributes": [
-       "**attribute1**",
-       "**attribute2**"
-   ],
-    "reference": "[http://orion2cartodb.appspot.com/notify/your_entity/attribute1-atributte2-...../your_cartodb_table]
-    "duration": "P1M",
-    "notifyConditions": [
-          {
-               "type": "ONCHANGE",
-               "condValues": [
-               "**attribute1**",
-               "**attribute2**"
-           ]
-       }
-   ],
-   "throttling": "PT1S"
- }
-```
+       entities": [
+           {
+               "type": "device", 
+               "isPattern": "false", 
+               "id": "**your_entity**"
+           }
+       ],
+       "attributes": [
+           "**attribute1**",
+           "**attribute2**"
+       ],
+        "reference": "[your_machine_service]"
+        "duration": "P1M",
+        "notifyConditions": [
+              {
+                   "type": "ONCHANGE",
+                   "condValues": [
+                   "**attribute1**",
+                   "**attribute2**"
+               ]
+           }
+       ],
+       "throttling": "PT1S"
+     }
+     
+    
+Based on the subscription, a table will be generated introducing the attributes and their values as column name and value (for each of the assets) respectively. When a new attribute is added within the subscription, a new column will be appended to the table, and the previous values for the new attribute will be considered null in the previous assets.
 
 
-Please note that orion2cartoDB will know the attribute to parse and
-the widget to push data based on the notification URL, no other
-provision will be required:
-
-```
-  http://orion2cartodb.appspot.com/notify/your_entity/your_attribute/your_cartodb_table
-```
 
 ### Update the ContextBroker entities
 
@@ -108,27 +93,28 @@ https://github.com/telefonicaid/fiware-figway/tree/master/python/ContextBroker
 
 Anyway, you can update it on your own as follows:
 
-```
-   POST [[HOST]/v1/updateContext][]
-   Accept: application/json
-   Fiware-Service: **your_service**
-   Content-Type: application/json
- 
-   {
-       "contextElements": [ 
-   {
-       "type": "**your_type**", 
-       "isPattern": "false", 
-       "id": "**your_entity**", 
-       "attributes": [
-          {
-               "name":  "**your_attribute**", 
-               "type":  "**your_id**", 
-               "value": "**your_value**"
-           }] }
-       ],
-       "updateAction": "APPEND" }
-```
+
+       POST [[HOST]/v1/updateContext][]
+       Accept: application/json
+       Fiware-Service: **your_service**
+       Content-Type: application/json
+     
+       {
+           "contextElements": [ 
+       {
+           "type": "**your_type**", 
+           "isPattern": "false", 
+           "id": "**your_entity**", 
+           "attributes": [
+              {
+                   "name":  "**your_attribute**", 
+                   "type":  "**your_id**", 
+                   "value": "**your_value**"
+               }] }
+           ],
+           "updateAction": "APPEND" }
+
+
 
 ### See the results
 
@@ -138,9 +124,8 @@ If everything went well, you should see the attribute updates at the CartoDB dat
 Limitations
 -----------
 
--   Only supports one CartoDB account that is hardcoded on the code.
+-	Your table will be named with your machine service's name. Please, do not change manually your table name, otherwise another table under the former name will be generated by default. 
 
--   Location atributtes must be divided in two columns, latitude and longitude, 
-    that should be configurated by the creator at the data table
+
 
 
