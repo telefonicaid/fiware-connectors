@@ -26,7 +26,7 @@ import string
 
 
 #EPSG is the identifier of WGS84
-EPSG = 4326
+EPSG = "4326"
 
 
 # Print Logs
