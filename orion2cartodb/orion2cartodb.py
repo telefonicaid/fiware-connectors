@@ -314,9 +314,9 @@ class DefaultHandler(webapp2.RequestHandler):
 
             # Control table name
             if tablename=="":
-                printLog("Bad table name","ERROR")
+                printLog("Wrong table name. Fiware-Service request header was expected","ERROR")
                 self.response.status_int = 403
-                self.response.write("Bad table name")
+                self.response.write("Wrong table name. Fiware-Service request header was expected")
                 raise
 
             #Loop for entities
