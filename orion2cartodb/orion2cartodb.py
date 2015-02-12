@@ -24,6 +24,11 @@ import datetime
 import unicodedata
 import string
 
+
+#EPSG is the identifier of WGS84
+EPSG = 4326
+
+
 # Print Logs
 def printLog(message,lvl):
     d = datetime.datetime.now()
@@ -122,7 +127,7 @@ class DefaultHandler(webapp2.RequestHandler):
                     position=str(attributes[key]).split(',')
                     latitude=position[0]
                     longitude=position[1]
-                    attributes_values=attributes_values+"the_geom=ST_SetSRID(ST_Point("+str(longitude)+","+str(latitude)+"),4326)"+","
+                    attributes_values=attributes_values+"the_geom=ST_SetSRID(ST_Point("+str(longitude)+","+str(latitude)+"),"+EPSG+")"+","
 
             # URL for updating attributes
             url=str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q="+"UPDATE%20" + tablename + "%20SET%20"+ attributes_values[:-1] +"%20WHERE%20name='" + entity_name + "'%20&api_key=" + properties["cartodb_apikey"]
