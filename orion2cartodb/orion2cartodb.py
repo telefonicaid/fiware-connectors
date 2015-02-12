@@ -25,14 +25,14 @@ import unicodedata
 import string
 
 # Print Logs
-def print_log(message,lvl):
+def printLog(message,lvl):
     d = datetime.datetime.now()
     ref=uuid.uuid4()
     log=str("time="+str(d.isoformat("T"))+"|lvl="+lvl+"|corr="+str(ref)+"|trans="+str(ref)+"|ob=ES|comp=ORION_TO_CARTODB|op="+message)
     print(log)
 
 #Normalize strings
-def string_normalizer(message):
+def stringNormalizer(message):
     try:
         # Convert to unicode format
         message = message.decode()
@@ -50,17 +50,17 @@ def string_normalizer(message):
         # Delete not ascii_letters
         message=''.join(x for x in message if x in string.ascii_letters or x=="_" or x.isdigit())
     except:
-        print_log("An error occurred while trying to normalize string","WARNING")
+        printLog("An error occurred while trying to normalize string","WARNING")
         return ""
 
     # Return normalized string
     return message
 
 # Load properties
-print_log("Loading properties from orion2cartodb.yaml","INFO")
+printLog("Loading properties from orion2cartodb.yaml","INFO")
 file = open("orion2cartodb.yaml")
 properties = yaml.load(file)
-print_log("Loaded","INFO")
+printLog("Loaded","INFO")
 
 # Class for communications
 class DefaultHandler(webapp2.RequestHandler):
@@ -68,7 +68,7 @@ class DefaultHandler(webapp2.RequestHandler):
     #Send Info to CartoDB
     def send2CartoDB(self, url):
         try:
-            print_log("Sending '"+str(url)+"' to CartoDB...","INFO")
+            printLog("Sending '"+str(url)+"' to CartoDB...","INFO")
 
             # Initializations
             error=False
@@ -82,7 +82,7 @@ class DefaultHandler(webapp2.RequestHandler):
             response=f.read()
             resp=json.loads(str(response))
 
-            print_log("Response: '"+str(resp)+ "'","INFO")
+            printLog("Response: '"+str(resp)+ "'","INFO")
 
             # If there is an error -> Error Control
             if "error" in resp:
@@ -93,11 +93,11 @@ class DefaultHandler(webapp2.RequestHandler):
                 total_rows=int(resp["total_rows"])
             f.close()
 
-            print_log("Sent to CartoDB","INFO")
+            printLog("Sent to CartoDB","INFO")
 
         # If it is not possible to send the data -> Error Control
         except:
-            print_log("An error occurred while trying to send info to CartoDB","WARNING")
+            printLog("An error occurred while trying to send info to CartoDB","WARNING")
             error=True
 
         # Return number of ROWs updated and if there was an error
@@ -105,9 +105,9 @@ class DefaultHandler(webapp2.RequestHandler):
 
 
     # Update ROW
-    def Update(self,tablename, entity_name, attributes):
+    def update(self,tablename, entity_name, attributes):
         try:
-            print_log("Updating attributes '" + str(attributes)+"'","INFO")
+            printLog("Updating attributes '" + str(attributes)+"'","INFO")
 
             # Get Attributes and concatenate them
             attributes_values=""
@@ -131,12 +131,12 @@ class DefaultHandler(webapp2.RequestHandler):
             error, total_rows=self.send2CartoDB(url)
 
             if error==False:
-                print_log("Updated","INFO")
+                printLog("Updated","INFO")
             else:
-                print_log("Attributes could not be updated","WARNING")
+                printLog("Attributes could not be updated","WARNING")
 
         except:
-            print_log("An error occurred while trying to Update","WARNING")
+            printLog("An error occurred while trying to Update","WARNING")
             error=True
 
         # Return if it was possible to update and the number of ROWs updated
@@ -144,9 +144,9 @@ class DefaultHandler(webapp2.RequestHandler):
 
 
     # Create new table and/or new ROW
-    def create_table(self, name, entity_name,attributes, types):
+    def createTable(self, name, entity_name,attributes, types):
         try:
-            print_log("Creating table '" + str(name)+"' ...","INFO")
+            printLog("Creating table '" + str(name)+"' ...","INFO")
 
             #Initialization
             error=False
@@ -198,7 +198,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
             # If table is created
             if error==False:
-                print_log("Displaying table '" + str(name)+"'","INFO")
+                printLog("Displaying table '" + str(name)+"'","INFO")
 
                 # URL to display it in the interface
                 url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=SELECT%20cdb_cartodbfytable('"+name+"')"+"&api_key="+properties["cartodb_apikey"]
@@ -207,15 +207,15 @@ class DefaultHandler(webapp2.RequestHandler):
                 error,total_rows=self.send2CartoDB(url)
 
                 if error==True:
-                    print_log("Table '" + str(name)+ "' could not be displayed","WARNING")
+                    printLog("Table '" + str(name)+ "' could not be displayed","WARNING")
                     return error
                 else:
-                    print_log("Table '" + str(name)+ "' displayed","INFO")
+                    printLog("Table '" + str(name)+ "' displayed","INFO")
 
             else:
-                print_log("Table '" + str(name)+"' could not be created","WARNING")
+                printLog("Table '" + str(name)+"' could not be created","WARNING")
 
-            print_log("Creating ROW " + str(entity_name)+" ...","INFO")
+            printLog("Creating ROW " + str(entity_name)+" ...","INFO")
 
             # URL to create a new ROW
             url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=INSERT%20INTO%20" + name + "%20("+keys[:-1]+")%20VALUES("+values[:-1]+")%20&api_key=" + properties["cartodb_apikey"]
@@ -224,13 +224,13 @@ class DefaultHandler(webapp2.RequestHandler):
             error,total_rows=self.send2CartoDB(url)
 
             if error==False:
-                print_log("Created ROW '" + str(entity_name)+"'","INFO")
+                printLog("Created ROW '" + str(entity_name)+"'","INFO")
             else:
-                print_log("ROW '" + str(entity_name)+"' could not be created","WARNING")
+                printLog("ROW '" + str(entity_name)+"' could not be created","WARNING")
 
 
         except:
-            print_log("An error occurred while trying to create table","WARNING")
+            printLog("An error occurred while trying to create table","WARNING")
             error=True
 
         # Return if it was possible to create table or ROW
@@ -240,7 +240,7 @@ class DefaultHandler(webapp2.RequestHandler):
     # Create new attributes in CartoDB
     def create_attributes(self, tablename, entity_name, attributes, types):
         try:
-            print_log("Creating attributes '"+str(attributes)+"'","INFO")
+            printLog("Creating attributes '"+str(attributes)+"'","INFO")
 
             # Initializations
             error=False
@@ -275,13 +275,13 @@ class DefaultHandler(webapp2.RequestHandler):
 
                 # If attribute has been created count it
                 if error==False:
-                    print_log("Created attribute '"+str(key)+"'","INFO")
+                    printLog("Created attribute '"+str(key)+"'","INFO")
                     cont=cont+1
                 else:
-                    print_log("Attribute "+str(key)+"' could not be created","WARNING")
+                    printLog("Attribute "+str(key)+"' could not be created","WARNING")
 
         except:
-            print_log("An error occurred while trying to create attributes","WARNING")
+            printLog("An error occurred while trying to create attributes","WARNING")
             error=True
 
              # Return number of attributes created
@@ -298,18 +298,18 @@ class DefaultHandler(webapp2.RequestHandler):
             #Get JSON Data
             data = json.loads(self.request.body)
         except:
-            print_log("Malformed JSON","ERROR")
+            printLog("Malformed JSON","ERROR")
             self.response.status_int = 403
             self.response.write("Malformed JSON")
             raise
 
         try:
             #Get Fiware-Service header = Table name
-            tablename=string_normalizer(str(self.request.headers.get('Fiware-Service')))
+            tablename=stringNormalizer(str(self.request.headers.get('Fiware-Service')))
 
             # Control table name
             if tablename=="":
-                print_log("Bad table name","ERROR")
+                printLog("Bad table name","ERROR")
                 self.response.status_int = 403
                 self.response.write("Bad table name")
                 raise
@@ -318,7 +318,7 @@ class DefaultHandler(webapp2.RequestHandler):
             for entity_id in data["contextResponses"]:
 
                 # Get entity name (replace '.' and ' ' and lower-case)
-                entity_name=string_normalizer(entity_id["contextElement"]["id"])
+                entity_name=stringNormalizer(entity_id["contextElement"]["id"])
 
                 # Loop for attributes and their types to append them into a dictionary
                 attributes={}       #Initialization
@@ -327,17 +327,17 @@ class DefaultHandler(webapp2.RequestHandler):
 
                     # Append
                     attributes[str(attritube_id["name"])]=str(attritube_id["value"])
-                    types[str(attritube_id["name"])]=string_normalizer(str(attritube_id["type"]))
+                    types[str(attritube_id["name"])]=stringNormalizer(str(attritube_id["type"]))
 
                 # Try to update the attributes
-                error,total_rows=self.Update(tablename,entity_name,attributes)
+                error,total_rows=self.update(tablename,entity_name,attributes)
                 rows_updated=rows_updated+total_rows
 
                 # If there is an error -> Table is not created or ROW is not created or there are new attributes
                 if error==True or total_rows==0:
 
                     # Create table and/or ROW
-                    error=self.create_table(tablename, entity_name,attributes,types)
+                    error=self.createTable(tablename, entity_name,attributes,types)
 
                     # If it's not possible to create table and/or ROW -> Table and ROW are created but there are new attributes
                     if error==True:
@@ -346,19 +346,19 @@ class DefaultHandler(webapp2.RequestHandler):
                         error,total_rows=self.create_attributes(tablename, entity_name, attributes, types)
 
                         if error==False:
-                            print_log("Created "+str(total_rows)+" rows","INFO")
+                            printLog("Created "+str(total_rows)+" rows","INFO")
 
 
                     # Try to Update attributes again
-                    error,total_rows=self.Update(tablename,entity_name,attributes)
+                    error,total_rows=self.update(tablename,entity_name,attributes)
                     rows_updated=rows_updated+total_rows
 
-            print_log("Updated "+str(rows_updated)+" rows","INFO")
+            printLog("Updated "+str(rows_updated)+" rows","INFO")
             self.response.status_int = 200
             self.response.write("Updated "+str(rows_updated)+" rows")
 
         except:
-            print_log("An exception occurred","ERROR")
+            printLog("An exception occurred","ERROR")
             self.response.status_int = 403
             self.response.write("An exception occurred")
 
