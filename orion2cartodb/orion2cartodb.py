@@ -84,9 +84,6 @@ class DefaultHandler(webapp2.RequestHandler):
 
             # Send data
             url= urllib2.quote(url,non_encode_symbols)
-            print("#########################################")
-            print(url)
-            print("#########################################")
             req = urllib2.Request(url)
             f = urllib2.urlopen(req)
 
