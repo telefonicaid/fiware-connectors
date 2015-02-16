@@ -27,6 +27,7 @@ import string
 
 #EPSG is the identifier of WGS84
 EPSG = "4326"
+non_encode_symbols = "&:/=(),'?!"
 
 
 # Print Logs
@@ -82,6 +83,7 @@ class DefaultHandler(webapp2.RequestHandler):
             total_rows=0
 
             # Send data
+            url= urllib2.quote(url,non_encode_symbols)
             req = urllib2.Request(url)
             f = urllib2.urlopen(req)
 
@@ -122,7 +124,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
                 # If it is not a position attribute concatenate it
                 if key!="position":
-                    attributes_values=attributes_values+str(key)+"=%20'"+str(attributes[key])+"',"
+                    attributes_values=attributes_values+str(key)+"= '"+str(attributes[key])+"',"
 
                 # If it is a position attribute split and concatenate it
                 else:
@@ -132,7 +134,7 @@ class DefaultHandler(webapp2.RequestHandler):
                     attributes_values=attributes_values+"the_geom=ST_SetSRID(ST_Point("+str(longitude)+","+str(latitude)+"),"+EPSG+")"+","
 
             # URL for updating attributes
-            url=str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q="+"UPDATE%20" + tablename + "%20SET%20"+ attributes_values[:-1] +"%20WHERE%20name='" + entity_name + "'%20&api_key=" + properties["cartodb_apikey"]
+            url=str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q="+"UPDATE " + tablename + " SET "+ attributes_values[:-1] +" WHERE name='" + entity_name + "' &api_key=" + properties["cartodb_apikey"]
 
             # Update attributes
             error, total_rows=self.send_cartodb(url)
@@ -158,7 +160,7 @@ class DefaultHandler(webapp2.RequestHandler):
             #Initialization
             error=False
             cont=0
-            attributes2create="name%20varchar,"     #String with new attributes and their types
+            attributes2create="name varchar,"     #String with new attributes and their types
             keys="name,"                            #String with new attributes
             values="'"+entity_name+"',"             #String with the values
 
@@ -175,7 +177,7 @@ class DefaultHandler(webapp2.RequestHandler):
                     if types[key]=="Quantity":
 
                         # Concatenate attribute and its type
-                        attributes2create=attributes2create+str(key)+"%20float,"
+                        attributes2create=attributes2create+str(key)+" float,"
 
                         # Concatenate value
                         values=values+attributes[key]+","
@@ -184,7 +186,7 @@ class DefaultHandler(webapp2.RequestHandler):
                     elif types[key]=="Boolean":
 
                         # Concatenate attribute and its type
-                        attributes2create=attributes2create+str(key)+"%20boolean,"
+                        attributes2create=attributes2create+str(key)+" boolean,"
 
                         # Concatenate value
                         values=values+attributes[key]+","
@@ -193,13 +195,13 @@ class DefaultHandler(webapp2.RequestHandler):
                     else:
 
                         # Concatenate attribute and its type
-                        attributes2create=attributes2create+str(key)+"%20varchar,"
+                        attributes2create=attributes2create+str(key)+" varchar,"
 
                         # Concatenate value
                         values=values+"'"+attributes[key]+"'"+","
 
             # URL to create table
-            url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=CREATE%20TABLE%20"+name+"("+attributes2create[:-1]+")"+"%20&api_key=" + properties["cartodb_apikey"]
+            url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=CREATE TABLE "+name+"("+attributes2create[:-1]+")"+" &api_key=" + properties["cartodb_apikey"]
 
             # Create table
             error,total_rows=self.send_cartodb(url)
@@ -209,7 +211,7 @@ class DefaultHandler(webapp2.RequestHandler):
                 print_log("Displaying table '" + str(name)+"'","INFO")
 
                 # URL to display it in the interface
-                url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=SELECT%20cdb_cartodbfytable('"+name+"')"+"&api_key="+properties["cartodb_apikey"]
+                url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=SELECT cdb_cartodbfytable('"+name+"')"+"&api_key="+properties["cartodb_apikey"]
 
                 # Send it to CartoDB
                 error,total_rows=self.send_cartodb(url)
@@ -226,7 +228,7 @@ class DefaultHandler(webapp2.RequestHandler):
             print_log("Creating ROW " + str(entity_name)+" ...","INFO")
 
             # URL to create a new ROW
-            url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=INSERT%20INTO%20" + name + "%20("+keys[:-1]+")%20VALUES("+values[:-1]+")%20&api_key=" + properties["cartodb_apikey"]
+            url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=INSERT INTO " + name + " ("+keys[:-1]+") VALUES("+values[:-1]+") &api_key=" + properties["cartodb_apikey"]
 
             # Create new ROW
             error,total_rows=self.send_cartodb(url)
@@ -253,18 +255,18 @@ class DefaultHandler(webapp2.RequestHandler):
 
                             # If attribute type is Quantity  indicate it
                             if types[key]=="Quantity":
-                                attribute2create=str(key)+"%20float"
+                                attribute2create=str(key)+" float"
 
                             # If attribute type is Boolean  indicate it
                             elif types[key]=="Boolean":
-                                attribute2create=str(key)+"%20boolean"
+                                attribute2create=str(key)+" boolean"
 
                             # If attribute is not Quantity or Boolean it is string
                             else:
-                                attribute2create=str(key)+"%20varchar"
+                                attribute2create=str(key)+" varchar"
 
                         # URL to create new attribute
-                        url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=ALTER%20TABLE%20IF%20EXISTS%20"+name+"%20ADD%20"+attribute2create+"%20&api_key=" + properties["cartodb_apikey"]
+                        url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=ALTER TABLE IF EXISTS "+name+" ADD "+attribute2create+" &api_key=" + properties["cartodb_apikey"]
 
                         # Create new attribute
                         error,total_rows=self.send_cartodb(url)
