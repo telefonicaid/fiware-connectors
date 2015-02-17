@@ -27,7 +27,7 @@ import string
 
 #EPSG is the identifier of WGS84
 EPSG = "4326"
-non_encode_symbols = "&:/=(),'?!"
+Non_encode_symbols = "&:/=(),'?!"
 
 
 # Print Logs
@@ -83,7 +83,7 @@ class DefaultHandler(webapp2.RequestHandler):
             total_rows=0
 
             # Send data
-            url= urllib2.quote(url,non_encode_symbols)
+            url= urllib2.quote(url,Non_encode_symbols)
             req = urllib2.Request(url)
             f = urllib2.urlopen(req)
 
