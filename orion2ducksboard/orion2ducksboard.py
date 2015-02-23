@@ -22,6 +22,9 @@ import base64
 import datetime
 import uuid
 from paste import httpserver
+import logs
+
+logs.config_log()
 
 #Class for errors
 class MiError(Exception):
@@ -51,23 +54,16 @@ class MiError(Exception):
             return "CONFIGURATION: Error " + str(self.valor)+" Invalid HOST"
 
 
-#print Logs
-def print_log(message,lvl):
-    d = datetime.datetime.now()
-    ref=uuid.uuid4()
-    log=str("time="+str(d.isoformat("T"))+"|lvl="+lvl+"|corr="+str(ref)+"|trans="+str(ref)+"|ob=ES|comp=ORION_TO_DUCKSBOARD|op="+message)
-    print(log)
-
 class Properties():
     file_content=[]
-    def Load(self):
+    def load(self):
         try:
             api_key=0
             file=open("orion2ducksboard.yaml")
 
             #check ir file exists
             if file.closed:
-                print_log("LOAD: File does not exist","WARNING")
+                logs.logger.warn("LOAD: File does not exist")
                 return 1
 
             #Load content file
@@ -91,7 +87,7 @@ class Properties():
         return 0,api_key
 
     #Get ip and port from configuration file
-    def get_Ip_Port(self):
+    def get_ip_port(self):
         ip=""
         port=""
         try:
@@ -124,7 +120,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
             #Check parameters size
             if len(parameters)<=2:
-                print_log("parameters length<=2","WARNING")
+                logs.logger.warn("parameters length<=2")
                 return 1, entity_id, attributes_names, widgets_ids, types, values
             # get each link of attributes with widgets
             for param in range(2, len(parameters)):
@@ -140,7 +136,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
                 #Check params size
                 if len(params)<=1:
-                    print_log("params length<=1","WARNING")
+                    logs.logger.warn("params length<=1")
                     return 1, entity_id, attributes_names, widgets_ids, types, values
 
                 for widg_param in range(1, len(params)):
@@ -199,7 +195,7 @@ class DefaultHandler(webapp2.RequestHandler):
                 elif data == "false":
                     ducksboard_data = {"value": 3,"timestamp":timestamp}
                 else:
-                    print_log("CREATE_DATA: Status not defined","WARNING")
+                    logs.logger.warn("CREATE_DATA: Status not defined")
                     return 1, ducksboard_data
 
             # type timeline #Values=title,image
@@ -220,7 +216,7 @@ class DefaultHandler(webapp2.RequestHandler):
                         "image": "",
                         "content": data},"timestamp":timestamp}
                 else:
-                    print_log("CREATE_DATA: Too values in timeline","WARNING")
+                    logs.logger.warn("CREATE_DATA: Too values in timeline")
                     return 1, ducksboard_data
 
             # type image #Values=caption
@@ -234,13 +230,13 @@ class DefaultHandler(webapp2.RequestHandler):
                         "source": data,
                         "caption": ""},"timestamp":timestamp}
                 else:
-                    print_log("CREATE_DATA: Too values in image","WARNING")
+                    logs.logger.warn("CREATE_DATA: Too values in image")
                     return 1, ducksboard_data
 
             # type gauges #Values=min,max
             elif type == "gauges":
                 if len(values) != 2:
-                    print_log("CREATE_DATA: Parameter error in gauges type","WARNING")
+                    logs.logger.warn("CREATE_DATA: Parameter error in gauges type")
                     return 1, ducksboard_data
                 else:
                     min = float(values[0])
@@ -251,7 +247,7 @@ class DefaultHandler(webapp2.RequestHandler):
             # type completion #Values=min,max
             elif type == "completion":
                 if len(values) == 2:
-                    print_log("CREATE_DATA: Parameter error in completion type","WARNING")
+                    logs.logger.warn("CREATE_DATA: Parameter error in completion type")
                     return 1, ducksboard_data
                 else:
                     ducksboard_data = {"value": {
@@ -288,10 +284,10 @@ class DefaultHandler(webapp2.RequestHandler):
                         "latitude": latitude,
                         "longitude": longitude},"timestamp":timestamp}
                 else:
-                    print_log("CREATE_DATA: Too values in map","WARNING")
+                    logs.logger.warn("CREATE_DATA: Too values in map")
                     return 1, ducksboard_data
             else:
-                print_log("CREATE_DATA: Wrong widget type","WARNING")
+                logs.logger.warn("CREATE_DATA: Wrong widget type")
                 return 1, ducksboard_data
 
         except:
@@ -312,10 +308,10 @@ class DefaultHandler(webapp2.RequestHandler):
         return 0, str(timestamp).split('.')[0]
 
     #Send to Ducksboard
-    def send2Ducksboard(self,ducksboard_data, wideget_id, headers):
+    def send_ducksboard(self,ducksboard_data, wideget_id, headers):
 
         #Send request
-        print_log("SENDING TO DUCKSBOARD: "+"WidgetID:"+str(wideget_id)+" Data:"+str(ducksboard_data),"DEBUG")
+        logs.logger.debug("SENDING TO DUCKSBOARD: "+"WidgetID:"+str(wideget_id)+" Data:"+str(ducksboard_data))
 
         try:
             data_post = json.dumps(ducksboard_data)
@@ -328,14 +324,14 @@ class DefaultHandler(webapp2.RequestHandler):
                 if att=="response":
                     if resp["response"]=="ok":
                         message="SENT TO DUCKSBOARD: "+"WidgetID:"+str(wideget_id)+" Data:"+str(ducksboard_data)
-                        print_log(message,"DEBUG")
+                        logs.logger.debug(message)
                     else:
                         message="SEND TO DUCKSBOARD: Bad Request from ducksboard ->"+str(resp["error"])
-                        print_log(message,"WARNING")
+                        logs.logger.warn(message)
                         return 1
                 else:
                     message="SEND TO DUCKSBOARD: Bad Request from ducksboard ->"+str(resp["error"])
-                    print_log(message,"WARNING")
+                    logs.logger.warn(message)
                     return 1
             f.close()
         except:
@@ -350,7 +346,13 @@ class DefaultHandler(webapp2.RequestHandler):
 
             # Get JSON
             data = json.loads(self.request.body)
+        except:
+            logs.logger.error("Malformed JSON")
+            self.response.status_int = 403
+            self.response.write("Malformed JSON")
+            return 1
 
+        try:
             # Look for the entity
             for received_entity in data['contextResponses']:
                 if received_entity['contextElement']['id'] == entity_id:
@@ -370,21 +372,21 @@ class DefaultHandler(webapp2.RequestHandler):
                                         time=metadata['value']
                                         status_error,timestamp=self.get_timestamp(time)
                                         if status_error==1:
-                                            print_log("SEND: Error in get_timestamp","WARNING")
+                                            logs.logger.warn("SEND: Error in get_timestamp")
                                             return 1
 
                                 # Loop for widgets
                                 for widget_pos in range(0, len(widgets_ids[attribute_pos])):
                                     status_error,ducksboard_data=self.create_data(types[attribute_pos][widget_pos], values[attribute_pos][widget_pos], value, timestamp)
                                     if status_error==1:
-                                        print_log("SEND: Error in create_data","WARNING")
+                                        logs.logger.warn("SEND: Error in create_data")
                                         return 1
 
                                     #Send request
                                     wideget_id=widgets_ids[attribute_pos][widget_pos]
-                                    status_error=self.send2Ducksboard(ducksboard_data,wideget_id,headers)
+                                    status_error=self.send_ducksboard(ducksboard_data,wideget_id,headers)
                                     if status_error==1:
-                                        print_log("SEND: Error in send2ducksboard","WARNING")
+                                        logs.logger.warn("SEND: Error in send_ducksboard")
                                         return 1
 
         except:
@@ -398,7 +400,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
         #Print path received
         message="PATH RECEIVED: "+self.request.path
-        print_log(message,"DEBUG")
+        logs.logger.debug(message)
 
         try:
             # get url path
@@ -416,22 +418,22 @@ class DefaultHandler(webapp2.RequestHandler):
             # Error control of needed information
             elif entity_id == "":
                 self.response.status_int = 403
-                self.response.write("Not found entity")
+                self.response.write("Not found entity: You must specify at least one entity")
                 raise MiError(101)
 
             elif len(attributes_names) == 0 or attributes_names[0]== "":
                 self.response.status_int = 403
-                self.response.write("Not found attributes")
+                self.response.write("Not found attributes: You must specify at least one attributes")
                 raise MiError(102)
 
             elif len(widgets_ids) == 0:
                 self.response.status_int = 403
-                self.response.write("Not found widgets_ids")
+                self.response.write("Not found widgets_ids: You must specify at least one widget_id")
                 raise MiError(103)
 
             elif len(types) == 0:
                 self.response.status_int = 403
-                self.response.write("Not found types")
+                self.response.write("Not found types: You must specify one type for each widget_id")
                 raise MiError(104)
 
             elif (len(attributes_names)!=len(widgets_ids)) or (len(attributes_names)!=len(types)) or (len(widgets_ids)!=len(types)):
@@ -441,7 +443,7 @@ class DefaultHandler(webapp2.RequestHandler):
 
 
         except MiError, e:
-            print_log(str(e),"ERROR")
+            logs.logger.error(str(e))
 
         else:
             try:
@@ -454,7 +456,7 @@ class DefaultHandler(webapp2.RequestHandler):
                     raise MiError(106)
 
             except MiError, e:
-                print_log(str(e),"ERROR")
+                logs.logger.error(str(e))
 
             else:
                 try:
@@ -467,38 +469,38 @@ class DefaultHandler(webapp2.RequestHandler):
                         raise MiError(108)
 
                 except MiError, e:
-                    print_log(str(e),"ERROR")
+                    logs.logger.error(str(e))
 
                 else:
                     #reply
                     if status_error==0:
                         self.response.write("OK")
-                        print_log("POST: OK","INFO")
+                        logs.logger.info("POST: OK")
                     else:
                         self.response.write("Error")
-                        print_log("POST: Error","ERROR")
+                        logs.logger.error("POST: Error")
 
 
 #main
 def main():
     #Load Properties
     prop=Properties()
-    status_error=prop.Load()
+    status_error=prop.load()
     if status_error==0:
         DefaultHandler.prop=prop
 
         application = webapp2.WSGIApplication([(r'/.*', DefaultHandler)], debug=True)
 
         #Get IP and Port
-        status_error,IP,PORT=prop.get_Ip_Port()
+        status_error,IP,PORT=prop.get_ip_port()
         if status_error==0:
             httpserver.serve(application, host=IP, port=PORT)
         else:
             raise MiError(109)
-            print_log(str(e),"ERROR")
+            logs.logger.error(str(e))
     else:
         raise MiError(107)
-        print_log(str(e),"ERROR")
+        logs.logger.error(str(e))
 
 if __name__ == '__main__':
     main()
