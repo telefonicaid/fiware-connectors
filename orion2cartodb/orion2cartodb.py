@@ -26,7 +26,8 @@ import logs
 
 #EPSG is the identifier of WGS84
 EPSG = "4326"
-Non_encode_symbols = "&:/=(),'?!"
+Non_encode_symbols = "&:/=(),'?!."
+mandatory_attributes=["cartodb_id", "the_geom", "the_geom_webmercator", "created_at", "updated_at", "position"]
 
 logs.config_log()
 
@@ -43,6 +44,7 @@ def string_normalizer(message):
         # Replace some characters
         message=message.replace('.','_')
         message=message.replace(' ','_')
+        message=message.replace(':','_')
 
         # Get NFKD unicode format
         message=unicodedata.normalize('NFKD', message)
@@ -74,6 +76,7 @@ class DefaultHandler(webapp2.RequestHandler):
             # Initializations
             error=False
             total_rows=0
+            attributes=[]
 
             # Send data
             url= urllib2.quote(url,Non_encode_symbols)
@@ -83,15 +86,21 @@ class DefaultHandler(webapp2.RequestHandler):
             response=f.read()
             resp=json.loads(response)
 
-            logs.logger.info("Response: '"+str(resp)+ "'")
+            logs.logger.info("Response: '"+json.dumps(resp)+ "'")
 
             # If there is an error -> Error Control
             if "error" in resp:
                 error=True
 
-            # Get rows updated
+            # Get number of rows updated
             if "total_rows" in resp:
                 total_rows=int(resp["total_rows"])
+
+            # Get existing attributes
+            if "rows" in resp:
+                for attribute in resp["rows"]:
+                    if "column_name" in attribute:
+                        attributes.append(string_normalizer(str(attribute["column_name"])))
             f.close()
 
             logs.logger.info("Sent to CartoDB")
@@ -102,7 +111,7 @@ class DefaultHandler(webapp2.RequestHandler):
             error=True
 
         # Return number of ROWs updated and if there was an error
-        return error, total_rows
+        return error, total_rows, attributes
 
 
     # Update ROW
@@ -129,7 +138,7 @@ class DefaultHandler(webapp2.RequestHandler):
             url=str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q="+"UPDATE " + tablename + " SET "+ attributes_values[:-1] +" WHERE name='" + entity_name + "' &api_key=" + properties["cartodb_apikey"]
 
             # Update attributes
-            error, total_rows=self.send_cartodb(url)
+            error, total_rows, existing_attributes=self.send_cartodb(url)
 
             if error==False:
                 logs.logger.info("Updated")
@@ -196,7 +205,7 @@ class DefaultHandler(webapp2.RequestHandler):
             url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=CREATE TABLE "+name+"("+attributes2create[:-1]+")"+" &api_key=" + properties["cartodb_apikey"]
 
             # Create table
-            error,total_rows=self.send_cartodb(url)
+            error,total_rows, existing_attributes=self.send_cartodb(url)
 
             # If table is created
             if error==False:
@@ -206,7 +215,7 @@ class DefaultHandler(webapp2.RequestHandler):
                 url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=SELECT cdb_cartodbfytable('"+name+"')"+"&api_key="+properties["cartodb_apikey"]
 
                 # Send it to CartoDB
-                error,total_rows=self.send_cartodb(url)
+                error,total_rows, existing_attributes=self.send_cartodb(url)
 
                 if error==True:
                     logs.logger.warn("Table '" + str(name)+ "' could not be displayed")
@@ -223,7 +232,7 @@ class DefaultHandler(webapp2.RequestHandler):
             url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=INSERT INTO " + name + " ("+keys[:-1]+") VALUES("+values[:-1]+") &api_key=" + properties["cartodb_apikey"]
 
             # Create new ROW
-            error,total_rows=self.send_cartodb(url)
+            error,total_rows, existing_attributes=self.send_cartodb(url)
 
             if error==False:
                 logs.logger.info("Created ROW '" + str(entity_name)+"'")
@@ -234,41 +243,50 @@ class DefaultHandler(webapp2.RequestHandler):
 
                 # Create new attributes in CartoDB
                 try:
-                    logs.logger.info("Creating attributes '"+str(attributes)+"'")
+
+                    # URL to get existing attributes
+                    url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=SELECT column_name FROM information_schema.columns WHERE table_name='"+name+"' &api_key=" + properties["cartodb_apikey"]
+
+                    # Get existing attributes
+                    error,total_rows, existing_attributes=self.send_cartodb(url)
+
+                    # Get non existing attributes
+                    new_attributes=set(attributes.keys())-set(existing_attributes)
+                    new_attributes=new_attributes-set(mandatory_attributes)
+
+                    logs.logger.info("Creating attributes '"+str(list(new_attributes))+"'")
+
+                    # URL to create new attributes
+                    url=str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=ALTER TABLE IF EXISTS "+name
 
                     # Loop for attributes
-                    for key in attributes.keys():
-
-                        # Strings with attribute name + attribute type
-                        attribute2create=""
+                    for key in list(new_attributes):
 
                         # If attribute type is not position (Position has not to be manually created)
                         if key!="position":
 
                             # If attribute type is Quantity  indicate it
                             if types[key]=="Quantity":
-                                attribute2create=str(key)+" float"
+                                url = url+" ADD "+str(key)+" float,"
 
                             # If attribute type is Boolean  indicate it
                             elif types[key]=="Boolean":
-                                attribute2create=str(key)+" boolean"
+                                url = url+" ADD "+str(key)+" boolean,"
 
                             # If attribute is not Quantity or Boolean it is string
                             else:
-                                attribute2create=str(key)+" varchar"
+                                url = url+" ADD "+str(key)+" varchar,"
 
-                        # URL to create new attribute
-                        url = str(properties["cartodb_base_endpoint"]) + "/api/v2/sql?q=ALTER TABLE IF EXISTS "+name+" ADD "+attribute2create+" &api_key=" + properties["cartodb_apikey"]
+                    url=url[:-1]+" &api_key=" + properties["cartodb_apikey"]
+                    # Create new attribute
+                    error,total_rows, existing_attributes=self.send_cartodb(url)
 
-                        # Create new attribute
-                        error,total_rows=self.send_cartodb(url)
-
-                        # If attribute has been created count it
-                        if error==False:
-                            logs.logger.info("Created attribute '"+str(key)+"'")
-                            cont=cont+1
-                        else:
-                            logs.logger.warn("Attribute "+str(key)+"' could not be created")
+                    # If attribute has been created count it
+                    if error==False:
+                        logs.logger.info("Created attribute '"+str(key)+"'")
+                        cont=cont+1
+                    else:
+                        logs.logger.warn("Attribute "+str(key)+"' could not be created")
 
                 except:
                     logs.logger.warn("An error occurred while trying to create attributes")
@@ -318,8 +336,8 @@ class DefaultHandler(webapp2.RequestHandler):
                 for attritube_id in entity_id['contextElement']['attributes']:
 
                     # Append
-                    attributes[str(attritube_id["name"])]=str(attritube_id["value"])
-                    types[str(attritube_id["name"])]=string_normalizer(str(attritube_id["type"]))
+                    attributes[string_normalizer(str(attritube_id["name"]))]=str(attritube_id["value"])
+                    types[str(string_normalizer(attritube_id["name"]))]=string_normalizer(str(attritube_id["type"]))
 
                 # Try to update the attributes
                 error,total_rows=self.update(tablename,entity_name,attributes)
@@ -338,9 +356,14 @@ class DefaultHandler(webapp2.RequestHandler):
                     error,total_rows=self.update(tablename,entity_name,attributes)
                     rows_updated=rows_updated+total_rows
 
-            logs.logger.info("Updated "+str(rows_updated)+" rows")
-            self.response.status_int = 200
-            self.response.write("Updated "+str(rows_updated)+" rows")
+            if rows_updated>0:
+                logs.logger.info("Updated "+str(rows_updated)+" rows")
+                self.response.status_int = 200
+                self.response.write("Updated "+str(rows_updated)+" rows")
+            else:
+                logs.logger.error("An error occurred and table is not updated")
+                self.response.status_int = 403
+                self.response.write("An error occurred and table is not updated")
 
         except:
             logs.logger.error("An exception occurred")
