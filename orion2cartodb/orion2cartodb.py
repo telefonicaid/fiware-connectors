@@ -319,10 +319,20 @@ class DefaultHandler(webapp2.RequestHandler):
             # Control table name
             if tablename=='none':
 
-                logs.logger.error("Wrong table name. Fiware-Service request header was expected")
-                self.response.status_int = 403
-                self.response.write("Wrong table name. Fiware-Service request header was expected")
-                return
+                # Try to get tablename from properties
+                if "cartodb_tablename" in properties:
+                    tablename=string_normalizer(str(properties["cartodb_tablename"]))
+                else:
+                    logs.logger.error("Wrong table name. Fiware-Service request header was expected")
+                    self.response.status_int = 403
+                    self.response.write("Wrong table name. Fiware-Service request header was expected")
+                    return
+
+                if tablename=="":
+                    logs.logger.error("Wrong table name. Configure orion2cartodb.yaml")
+                    self.response.status_int = 403
+                    self.response.write("Wrong table name. Configure orion2cartodb.yaml")
+                    return
 
             #Loop for entities
             for entity_id in data["contextResponses"]:
