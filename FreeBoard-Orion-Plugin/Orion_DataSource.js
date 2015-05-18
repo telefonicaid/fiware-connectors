@@ -37,6 +37,8 @@
 					xhr.setRequestHeader("Content-Type", "application/json");
 					xhr.setRequestHeader("Accept", "application/json");
 					xhr.setRequestHeader("Fiware-Service", currentSettings.service);
+					xhr.setRequestHeader("Fiware-ServicePath", currentSettings.servicepath);
+					xhr.setRequestHeader("X-Auth-Token", currentSettings.xauthtoken);
 				},
 				success   : function(data)
 				{
@@ -124,7 +126,7 @@
 		settings   : [
 			{
 				name        : "cbhost",
-				display_name: "Host",
+				display_name: "Host:port",
 				type        : "text"
 			},
 			{
@@ -137,6 +139,16 @@
 			{
 				name        : "service",
 				display_name: "Fiware-Service",
+				type        : "text"
+			},
+			{
+				name        : "servicepath",
+				display_name: "Fiware-ServicePath",
+				type        : "text"
+			},
+			{
+				name        : "xauthtoken",
+				display_name: "X-Auth-Token",
 				type        : "text"
 			},
 			{
