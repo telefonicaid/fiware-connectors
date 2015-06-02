@@ -122,7 +122,7 @@
 	};
 
 	freeboard.loadDatasourcePlugin({
-		type_name  : "Orion Data Source",
+		type_name  : "FIWARE Orion",
 		settings   : [
 			{
 				name        : "cbhost",
