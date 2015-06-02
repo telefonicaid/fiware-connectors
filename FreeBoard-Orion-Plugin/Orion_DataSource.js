@@ -37,6 +37,8 @@
 					xhr.setRequestHeader("Content-Type", "application/json");
 					xhr.setRequestHeader("Accept", "application/json");
 					xhr.setRequestHeader("Fiware-Service", currentSettings.service);
+					xhr.setRequestHeader("Fiware-ServicePath", currentSettings.servicepath);
+					xhr.setRequestHeader("X-Auth-Token", currentSettings.xauthtoken);
 				},
 				success   : function(data)
 				{
@@ -72,9 +74,23 @@
 							}
 							else{
 								
-								// If attribute is not a number append it
+								// If attribute is not a number
 								if(isNaN(attributes[i]["value"])){
-									mydata[attributes[i]["name"]]=attributes[i]["value"];
+									
+									// If attribute is a boolean and false append 0
+									if(attributes[i]["value"]=="false"){
+										mydata[attributes[i]["name"]]=0;
+									}
+									
+									// If attribute is a boolean and true append 1
+									else if(attributes[i]["value"]=="true"){
+										mydata[attributes[i]["name"]]=1;
+									}
+									
+									// If attribute is not a boolean or a position or a number append it
+									else{
+										mydata[attributes[i]["name"]]=attributes[i]["value"];
+									}
 								}
 								
 								//If attribute is a number round and append it
@@ -106,11 +122,11 @@
 	};
 
 	freeboard.loadDatasourcePlugin({
-		type_name  : "Orion Data Source",
+		type_name  : "FIWARE Orion",
 		settings   : [
 			{
 				name        : "cbhost",
-				display_name: "Host",
+				display_name: "Host:port",
 				type        : "text"
 			},
 			{
@@ -123,6 +139,16 @@
 			{
 				name        : "service",
 				display_name: "Fiware-Service",
+				type        : "text"
+			},
+			{
+				name        : "servicepath",
+				display_name: "Fiware-ServicePath",
+				type        : "text"
+			},
+			{
+				name        : "xauthtoken",
+				display_name: "X-Auth-Token",
 				type        : "text"
 			},
 			{
