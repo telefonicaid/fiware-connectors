@@ -1,0 +1,125 @@
+{
+    "subscriptionId": "55251aef9860038b35c122cb",
+    "originator": "localhost",
+    "contextResponses": [
+        {
+            "contextElement": {
+                "type": "device",
+                "isPattern": "false",
+                "id": "MiModelo.MiComponente_003",
+                "attributes": [
+                    {
+                        "name": "temperature2",
+                        "type": "Quantity",
+                        "value": "17",
+                        "metadatas": [
+                            {
+                                "name": "uom",
+                                "type": "string",
+                                "value": "celsius"
+                            },
+                            {
+                                "name": "phenomenon",
+                                "type": "string",
+                                "value": "urn:x-ogc:def:phenomenon:IDAS:1.0:temperature"
+                            },
+                            {
+                                "name": "TimeInstant",
+                                "type": "urn:x-ogc:def:trs:IDAS:1.0:ISO8601",
+                                "value": "2015-02-03T09:28:31Z"}]
+                    },
+                    {
+                        "name": "temperature",
+                        "type": "Quantity",
+                        "value": "17",
+                        "metadatas": [
+                            {
+                                "name": "uom",
+                                "type": "string",
+                                "value": "celsius"
+                            },
+                            {
+                                "name": "phenomenon",
+                                "type": "string",
+                                "value": "urn:x-ogc:def:phenomenon:IDAS:1.0:temperature"
+                            },
+                            {
+                                "name": "TimeInstant",
+                                "type": "urn:x-ogc:def:trs:IDAS:1.0:ISO8601",
+                                "value": "2015-02-03T09:28:31Z"}]
+                    },
+                    {
+                        "name": "Test",
+                        "type": "type TEST",
+                        "value": "12",
+                        "metadatas": [
+                            {
+                                "name": "uom",
+                                "type": "string",
+                                "value": "celsius"
+                            },
+                            {
+                                "name": "phenomenon",
+                                "type": "string",
+                                "value": "urn:x-ogc:def:phenomenon:IDAS:1.0:temperature"
+                            },
+                            {
+                                "name": "TimeInstant",
+                                "type": "urn:x-ogc:def:trs:IDAS:1.0:ISO8601",
+                                "value": "2015-02-03T09:28:31Z"}]
+                    },
+                    {
+                        "name": "Test2",
+                        "type": "type TEST",
+                        "value": "aaaa",
+                        "metadatas": [
+                            {
+                                "name": "uom",
+                                "type": "string",
+                                "value": "celsius"
+                            },
+                            {
+                                "name": "phenomenon",
+                                "type": "string",
+                                "value": "urn:x-ogc:def:phenomenon:IDAS:1.0:temperature"
+                            },
+                            {
+                                "name": "TimeInstant",
+                                "type": "urn:x-ogc:def:trs:IDAS:1.0:ISO8601",
+                                "value": "2015-02-03T09:28:31Z"}]
+                    }
+                ]
+            },
+            "statusCode": {
+                "code": "200",
+                "reasonPhrase": "OK"}},
+        {
+            "contextElement": {
+                "type": "device",
+                "isPattern": "false",
+                "id": "MiModelo.MiComponente_003",
+                "attributes": [
+                    {
+                        "name": "temperature",
+                        "type": "Quantity",
+                        "value": "17",
+                        "metadatas": [
+                            {
+                                "name": "uom",
+                                "type": "string",
+                                "value": "celsius"
+                            },
+                            {
+                                "name": "phenomenon",
+                                "type": "string",
+                                "value": "urn:x-ogc:def:phenomenon:IDAS:1.0:temperature"
+                            },
+                            {
+                                "name": "TimeInstant",
+                                "type": "urn:x-ogc:def:trs:IDAS:1.0:ISO8601",
+                                "value": "2015-02-03T09:28:31Z"}]}]
+            },
+            "statusCode": {
+                "code": "200",
+                "reasonPhrase": "OK"}}
+    ]}
