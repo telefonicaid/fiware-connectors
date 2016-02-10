@@ -22,11 +22,17 @@
 
 		this.updateNow = function()
 		{
-			url = "http://"+currentSettings.cbhost+"/NGSI10/queryContext";
+		    url = currentSettings.cbhost+"/NGSI10/queryContext";
+		
+		    if(currentSettings.use_https) {
+		        url = "https://"+url;
+		    } else {
+		        url = "http://"+url;
+		    }
+			
 			if(currentSettings.use_thingproxy) {
 				url =  "https://thingproxy.freeboard.io/fetch/" + url;
 			}	
-			
 			$.ajax({
 				url       : url,
 				dataType  : "JSON",
@@ -124,6 +130,12 @@
 	freeboard.loadDatasourcePlugin({
 		type_name  : "FIWARE Orion",
 		settings   : [
+			{
+				name: "use_https",
+				display_name: "HTTPS",
+				type: "boolean",
+				default_value: false
+			},
 			{
 				name        : "cbhost",
 				display_name: "Host:port",
